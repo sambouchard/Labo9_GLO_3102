@@ -4,28 +4,27 @@
     <meta charset="UTF-8">
     <title>Userinterface</title>
 </head>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    let socket = io()
-</script>
+
 <body>
     <div id="loginblock">
         <p>Entrez un username pour pouvoir envoyer des messages</p>
         <input id='username' type="text" placeholder="Entrez votre username desire">
-        <button onclick="Postusername">Submit</button>
+        <button id='submitbutton' onclick="Postusername()">Submit</button>
     </div>
-    <div id="chatsection" style="border-style: solid; width: 70%; height: 60vh; position: center">
-        <ol id ="messagelist"></ol>
+    <div id="chatsection" style="border-style: solid; width: 70%; height: 60vh; background-color: gray">
+        <div id ="messagelist"></div>
     </div>
     <div id="chatbox" style="border-style: solid; height: 20vh; width: 70%">
-        <input id="chatinputs" type="text" style="width: 80%; height: 80%">
-        <button id="msgbutton" style="float: right; height: 80%; width: 15%;" disabled>Envoyer</button>
+        <input id="chatinput" type="text" style="width: 80%; height: 80%">
+        <button onclick="emitmessage(document.getElementById('chatinput').value)" id="msgbutton" style="float: right; height: 80%; width: 15%;" disabled>Envoyer</button>
     </div>
+
 </body>
 </html>
+<script src="/socket.io/socket.io.js"></script>
 <script>
-    let idcounter = 0;
-    let socket = io.connect("http://localhost:3000");
+    let socket = io();
+    let username = ''
     function Postusername() {
         let usernametopost = document.getElementById('username').value;
         if (usernametopost == '')
@@ -33,23 +32,23 @@
             alert('Invalid username, cant be blank')
         }
         else{
-            let init = {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({username: usernametopost, id: idcounter})
-            }
-            fetch('http://localhost:8080/postusername',init).then();
-            idcounter ++;
+            username = usernametopost
             let button = document.getElementById('msgbutton');
-            button.enable()
+            button.disabled = false;
+            let loginbutton = document.getElementById('submitbutton');
+            loginbutton.disabled = true;
 
         }
     }
     function emitmessage(message) {
-        socket.emit('chatmessage',message)
+        socket.emit('chatmessage',message, username);
+        document.getElementById('chatinput').value = '';
 
     }
+    socket.on('chatmessage',function (msg, username) {
+        let mesagelist = document.getElementById('messagelist');
+        let chatnode = document.createElement('p');
+        chatnode.appendChild(document.createTextNode(username + ' : ' + msg));
+        mesagelist.appendChild(chatnode)
+    })
 </script>
